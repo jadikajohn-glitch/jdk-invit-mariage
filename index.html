@@ -92,6 +92,8 @@ h1.script .amp{display:inline;font-size:inherit;font-style:normal;color:var(--go
 .month{margin:0;font-size:1rem;letter-spacing:.38em;text-transform:uppercase;font-weight:600;color:var(--ink);padding-left:.38em}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 #status{position:sticky;bottom:calc(.75rem + env(safe-area-inset-bottom,0px));margin-top:1.5rem;padding:.8rem 1rem;border-radius:.7rem;background:var(--green);color:var(--on-green);text-align:center;font-weight:500;display:none}
+.demo-wm{position:fixed;inset:0;pointer-events:none;z-index:50;display:flex;align-items:center;justify-content:center;font:600 clamp(2.4rem,13vw,6rem)/1.1 "Hanken Grotesk",sans-serif;color:rgba(163,58,43,.18);transform:rotate(-30deg);text-align:center;white-space:normal;padding:1rem;letter-spacing:.05em}
+.demo-note{background:#A33A2B;color:#fff;border-radius:.5rem;padding:.5rem .8rem;font-size:.9rem;font-weight:600;margin:0 0 1rem}
 footer{text-align:center;color:var(--muted);font-size:.92rem;padding-top:2.5rem;border-top:1px solid var(--line)}
 footer .serif{font-size:1.5rem;color:var(--ink)}
 @media (prefers-reduced-motion:no-preference){.arch{animation:rise 1s ease-out both}@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}}
@@ -435,16 +437,18 @@ document.getElementById("sendDrinks").onclick=function(){
 };
 // Carte d'invitation personnelle : ?n=Nom&p=2&t=TABLE
 (function(){
-  var q, n="", t="", p=0;
-  try{q=new URLSearchParams(location.search);n=(q.get("n")||"").trim().slice(0,60);t=(q.get("t")||"").trim().slice(0,40);p=parseInt(q.get("p"))||0}catch(e){}
+  var q, n="", t="", p=0, demo=false;
+  try{q=new URLSearchParams(location.search);n=(q.get("n")||"").trim().slice(0,60);t=(q.get("t")||"").trim().slice(0,40);p=parseInt(q.get("p"))||0;demo=q.get("demo")==="1"}catch(e){}
   if(!n)return;
   var $g=function(i){return document.getElementById(i)};
   $g("gname").textContent=n; guest.value=n; if(p>0)cnt.value=Math.min(p,20);
   var line=(t?"Table "+t:"")+(t&&p>0?" · ":"")+(p>0?p+(p>1?" personnes":" personne"):"");
   if(line){$g("gtable").textContent=line;$g("gtable").hidden=false}
-  var info="MARIAGE JOHN & CHRINES | Invité : "+n+(t?" | Table : "+t:"")+(p>0?" | Personnes : "+p:"");
+  var info=(demo?"DEMO - NON AUTHENTIQUE - INVALIDE | ":"")+"MARIAGE JOHN & CHRINES | Invité : "+n+(t?" | Table : "+t:"")+(p>0?" | Personnes : "+p:"");
   try{var qc0=qrCanvas(info,8);qc0.style.width="224px";qc0.style.height="224px";qc0.setAttribute("aria-label","Code QR de votre invitation");$g("qr").appendChild(qc0)}catch(e){return}
   $g("pass").hidden=false;
+  if(demo){var wm=document.createElement("div");wm.className="demo-wm";wm.textContent="DÉMO · NON AUTHENTIQUE";document.body.appendChild(wm);
+    var nt=document.createElement("p");nt.className="demo-note";nt.textContent="Invitation de démonstration : ce code n’est pas valable le jour J.";$g("pass").insertBefore(nt,$g("pass").firstChild)}
 
   function wrap(c,text,maxW){var w=text.split(" "),lines=[],cur="";w.forEach(function(x){var tt=cur?cur+" "+x:x;if(c.measureText(tt).width>maxW&&cur){lines.push(cur);cur=x}else cur=tt});if(cur)lines.push(cur);return lines}
   async function build(){
@@ -472,6 +476,9 @@ document.getElementById("sendDrinks").onclick=function(){
     var H=y+80,out=document.createElement("canvas");out.width=W;out.height=H;var o=out.getContext("2d");
     o.drawImage(big,0,0,W,H,0,0,W,H);
     o.strokeStyle=GOLD;o.lineWidth=5;o.strokeRect(34,34,W-68,H-68);o.lineWidth=1.5;o.globalAlpha=.6;o.strokeRect(52,52,W-104,H-104);
+    if(demo){o.save();o.translate(W/2,H/2);o.rotate(-Math.PI/6);o.textAlign="center";o.fillStyle="rgba(163,58,43,.16)";o.font='600 120px "Hanken Grotesk", sans-serif';
+      for(var k=-3;k<=3;k++){o.fillText("DÉMO",0,k*360);}
+      o.restore();o.fillStyle="#A33A2B";o.fillRect(34,34,W-68,64);o.fillStyle="#fff";o.textAlign="center";o.font='600 28px "Hanken Grotesk", sans-serif';o.fillText("DÉMO · NON AUTHENTIQUE · NON VALABLE LE JOUR J",W/2,76)}
     return out;
   }
   $g("dl").onclick=async function(){
