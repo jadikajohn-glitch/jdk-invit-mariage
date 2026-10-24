@@ -410,18 +410,29 @@ var guest = {value:""};
 var statusEl = document.getElementById("status");
 var timer;
 function say(t){statusEl.textContent=t;statusEl.style.display="block";clearTimeout(timer);timer=setTimeout(function(){statusEl.style.display="none"},4000)}
-function send(text){
+var SB_URL = "https://pfuuqbhnhpinkjgnnebq.supabase.co/rest/v1/reponses";
+var SB_KEY = "sb_publishable_QtOP987y7_V6w6Xn10v4yg_sjfq2mCH";
+var rec = {table:"", demo:false};
+// Enregistre la réponse pour la page admin (sans bloquer WhatsApp si ça échoue)
+function record(row){
+  if(rec.demo) return;
+  try{
+    fetch(SB_URL,{method:"POST",keepalive:true,headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify(row)}).catch(function(){});
+  }catch(e){}
+}
+function send(text, row){
   var n = guest.value.trim() || "un invité";
+  if(row){row.invite=n.slice(0,80); if(rec.table) row.table_nom=rec.table; record(row)}
   window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(text.replace("{nom}",n)),"_blank");
 }
 var cnt = {value:""};
 function people(){var n=parseInt(cnt.value)||0;return n>0?" ("+n+(n>1?" personnes":" personne")+")":""}
-document.getElementById("yes").onclick=function(){send("Bonjour, c’est {nom}. Je confirme ma présence"+people()+" au mariage de John et Chrines, le 6 novembre 2026.")};
-document.getElementById("no").onclick=function(){send("Bonjour, c’est {nom}. Je suis indisponible : merci d’annuler mon invitation au mariage de John et Chrines.")};
+document.getElementById("yes").onclick=function(){send("Bonjour, c’est {nom}. Je confirme ma présence"+people()+" au mariage de John et Chrines, le 6 novembre 2026.",{type:"presence",personnes:parseInt(cnt.value)||null})};
+document.getElementById("no").onclick=function(){send("Bonjour, c’est {nom}. Je suis indisponible : merci d’annuler mon invitation au mariage de John et Chrines.",{type:"absence"})};
 document.getElementById("sendMsg").onclick=function(){
   var m = document.getElementById("msg").value.trim();
   if(!m){say("Écrivez votre message avant de l’envoyer.");return}
-  send("Livre d’or — {nom} : « "+m+" »");
+  send("Livre d’or — {nom} : « "+m+" »",{type:"message",message:m.slice(0,500)});
 };
 var pills = Array.prototype.slice.call(document.querySelectorAll(".pill"));
 pills.forEach(function(p){p.onclick=function(){
@@ -433,12 +444,13 @@ pills.forEach(function(p){p.onclick=function(){
 document.getElementById("sendDrinks").onclick=function(){
   var picked = pills.filter(function(x){return x.getAttribute("aria-pressed")==="true"}).map(function(x){return x.textContent});
   if(!picked.length){say("Choisissez au moins une boisson.");return}
-  send("Mes boissons — {nom} : "+picked.join(" et "));
+  send("Mes boissons — {nom} : "+picked.join(" et "),{type:"boissons",boissons:picked.join(" et ").slice(0,120)});
 };
 // Carte d'invitation personnelle : ?n=Nom&p=2&t=TABLE
 (function(){
   var q, n="", t="", p=0, demo=false;
   try{q=new URLSearchParams(location.search);n=(q.get("n")||"").trim().slice(0,60);t=(q.get("t")||"").trim().slice(0,40);p=parseInt(q.get("p"))||0;demo=q.get("demo")==="1"}catch(e){}
+  rec.table=t; rec.demo=demo;
   if(!n)return;
   var $g=function(i){return document.getElementById(i)};
   $g("gname").textContent=n; guest.value=n; if(p>0)cnt.value=Math.min(p,20);
