@@ -449,7 +449,7 @@ document.getElementById("sendDrinks").onclick=function(){
 // Carte d'invitation personnelle : ?n=Nom&p=2&t=TABLE
 (function(){
   var q, n="", t="", p=0, demo=false, slug="";
-  try{q=new URLSearchParams(location.search);n=(q.get("n")||"").trim().slice(0,60);t=(q.get("t")||"").trim().slice(0,40);p=parseInt(q.get("p"))||0;demo=q.get("demo")==="1";var ms=location.pathname.match(/\/i\/([A-Za-z0-9-]{3,64})\/?$/);if(ms)slug=ms[1].toLowerCase()}catch(e){}
+  try{q=new URLSearchParams(location.search);n=(q.get("n")||"").trim().slice(0,60);t=(q.get("t")||"").trim().slice(0,40);p=parseInt(q.get("p"))||0;demo=q.get("demo")==="1";var ms=location.pathname.match(/\/i\/([A-Za-z0-9-]{3,64})\/?$/);if(ms)slug=ms[1].toLowerCase();var qi=(q.get("i")||"").trim();if(!slug&&/^[A-Za-z0-9-]{3,64}$/.test(qi))slug=qi.toLowerCase()}catch(e){}
   function start(){
   rec.table=t; rec.demo=demo;
   if(!n)return;
