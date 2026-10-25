@@ -448,8 +448,9 @@ document.getElementById("sendDrinks").onclick=function(){
 };
 // Carte d'invitation personnelle : ?n=Nom&p=2&t=TABLE
 (function(){
-  var q, n="", t="", p=0, demo=false;
-  try{q=new URLSearchParams(location.search);n=(q.get("n")||"").trim().slice(0,60);t=(q.get("t")||"").trim().slice(0,40);p=parseInt(q.get("p"))||0;demo=q.get("demo")==="1"}catch(e){}
+  var q, n="", t="", p=0, demo=false, slug="";
+  try{q=new URLSearchParams(location.search);n=(q.get("n")||"").trim().slice(0,60);t=(q.get("t")||"").trim().slice(0,40);p=parseInt(q.get("p"))||0;demo=q.get("demo")==="1";var ms=location.pathname.match(/\/i\/([A-Za-z0-9-]{3,64})\/?$/);if(ms)slug=ms[1].toLowerCase()}catch(e){}
+  function start(){
   rec.table=t; rec.demo=demo;
   if(!n)return;
   var $g=function(i){return document.getElementById(i)};
@@ -504,6 +505,13 @@ document.getElementById("sendDrinks").onclick=function(){
     }catch(e){say("Téléchargement impossible : réessayez.")}
     b.disabled=false;
   };
+  }
+  if(slug&&!n){
+    fetch(SB_URL.replace("/rest/v1/reponses","/rest/v1/rpc/get_lien"),{method:"POST",headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({p_slug:slug})})
+      .then(function(r){return r.ok?r.json():null})
+      .then(function(j){if(j&&j.n){n=String(j.n).slice(0,60);t=String(j.t||"").slice(0,40);p=parseInt(j.p)||0;demo=!!j.demo}start()})
+      .catch(function(){start()});
+  }else start();
 })();
 // Compte à rebours (heure de Lubumbashi, UTC+2)
 (function(){
