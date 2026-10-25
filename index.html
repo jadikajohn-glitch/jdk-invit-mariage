@@ -150,6 +150,11 @@ footer .serif{font-size:1.5rem;color:var(--ink)}
   <h2>Votre réponse</h2>
   <p class="sub">Confirmez votre présence, laissez un mot aux mariés et choisissez vos boissons.</p>
 
+  <div class="block" id="nameAsk" hidden>
+    <h3>Votre nom</h3>
+    <input id="nameIn" maxlength="60" autocomplete="name" placeholder="Prénom et nom, comme sur votre invitation">
+  </div>
+
   <div class="block">
     <h3>Présence</h3>
     <div class="row">
@@ -407,6 +412,7 @@ function qrCanvas(text, scale) {
 var WHATSAPP = "243830494783";
 
 var guest = {value:""};
+var pendingLoad = false;
 var statusEl = document.getElementById("status");
 var timer;
 function say(t){statusEl.textContent=t;statusEl.style.display="block";clearTimeout(timer);timer=setTimeout(function(){statusEl.style.display="none"},4000)}
@@ -421,7 +427,14 @@ function record(row){
   }catch(e){}
 }
 function send(text, row){
-  var n = guest.value.trim() || "un invité";
+  if(pendingLoad){say("Votre invitation se charge, réessayez dans un instant.");return}
+  var n = guest.value.trim();
+  if(!n){
+    var ask=document.getElementById("nameAsk"), inp=document.getElementById("nameIn");
+    ask.hidden=false;
+    if(inp.value.trim()){n=inp.value.trim().slice(0,60)}
+    else{say("Indiquez d’abord votre nom.");ask.scrollIntoView({block:"center"});inp.focus();return}
+  }
   if(row){row.invite=n.slice(0,80); if(rec.table) row.table_nom=rec.table; record(row)}
   window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(text.replace("{nom}",n)),"_blank");
 }
@@ -506,11 +519,11 @@ document.getElementById("sendDrinks").onclick=function(){
     b.disabled=false;
   };
   }
-  if(slug&&!n){
+  if(slug&&!n){pendingLoad=true;
     fetch(SB_URL.replace("/rest/v1/reponses","/rest/v1/rpc/get_lien"),{method:"POST",headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({p_slug:slug})})
       .then(function(r){return r.ok?r.json():null})
-      .then(function(j){if(j&&j.n){n=String(j.n).slice(0,60);t=String(j.t||"").slice(0,40);p=parseInt(j.p)||0;demo=!!j.demo}start()})
-      .catch(function(){start()});
+      .then(function(j){pendingLoad=false;if(j&&j.n){n=String(j.n).slice(0,60);t=String(j.t||"").slice(0,40);p=parseInt(j.p)||0;demo=!!j.demo}start()})
+      .catch(function(){pendingLoad=false;start()});
   }else start();
 })();
 // Compte à rebours (heure de Lubumbashi, UTC+2)
