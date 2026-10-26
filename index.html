@@ -520,10 +520,13 @@ document.getElementById("sendDrinks").onclick=function(){
   };
   }
   if(slug&&!n){pendingLoad=true;
+    var hideAll=document.createElement("style");hideAll.textContent="body{visibility:hidden}";document.head.appendChild(hideAll);
+    var showAll=function(){if(hideAll.parentNode)hideAll.parentNode.removeChild(hideAll)};
+    var cancelPage=function(){document.title="Invitation annulée";document.head.querySelectorAll("style,link[rel=stylesheet]").forEach(function(e){e.remove()});document.body.removeAttribute("class");document.body.setAttribute("style","margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#fff;color:#222;font:18px/1.6 Georgia,serif;text-align:center;padding:24px");document.body.innerHTML="<p>Invitation annulée.<br>Merci.</p>"};
     fetch(SB_URL.replace("/rest/v1/reponses","/rest/v1/rpc/get_lien"),{method:"POST",headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({p_slug:slug})})
       .then(function(r){return r.ok?r.json():null})
-      .then(function(j){pendingLoad=false;if(j&&j.n){n=String(j.n).slice(0,60);t=String(j.t||"").slice(0,40);p=parseInt(j.p)||0;demo=!!j.demo}start()})
-      .catch(function(){pendingLoad=false;start()});
+      .then(function(j){pendingLoad=false;if(j&&j.annule){cancelPage();return}showAll();if(j&&j.n){n=String(j.n).slice(0,60);t=String(j.t||"").slice(0,40);p=parseInt(j.p)||0;demo=!!j.demo}start()})
+      .catch(function(){pendingLoad=false;showAll();start()});
   }else start();
 })();
 // Compte à rebours (heure de Lubumbashi, UTC+2)
